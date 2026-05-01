@@ -48,15 +48,15 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
 
       - name: Build bottle
+        working-directory: ${{ github.workspace }}
         run: |
           brew bottle \
             --json \
-            --output-dir "$GITHUB_WORKSPACE" \
             --root-url "https://github.com/konjoai/homebrew-squash/releases/download/squash-ai-${{ steps.version.outputs.version }}" \
             konjoai/squash/squash-ai
 
       - name: List bottle output
-        run: ls -lh "$GITHUB_WORKSPACE"/*.bottle.* 2>/dev/null || echo "no bottle files in workspace"
+        run: ls -lh "$GITHUB_WORKSPACE"/*.bottle.* 2>/dev/null || (echo "no bottle files in workspace; searching home & tmp" && find "$HOME" /tmp -name "*.bottle.*" 2>/dev/null | head -20)
 
       - name: Upload bottle and JSON
         uses: actions/upload-artifact@v4
