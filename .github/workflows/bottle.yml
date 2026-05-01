@@ -104,7 +104,7 @@ jobs:
           git add Formula/squash-ai.rb
           git diff --cached --quiet || git commit \
             -m "chore(bottles): add bottles for squash-ai ${{ steps.version.outputs.version }}"
-          git push
+          git push origin HEAD:main
 
       - name: Create GitHub Release and upload bottles
         run: |
