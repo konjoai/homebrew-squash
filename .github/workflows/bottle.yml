@@ -89,11 +89,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: bottle_*
+          path: bottles
           merge-multiple: true
+
+      - name: List downloaded bottles
+        run: find bottles -type f | sort
 
       - name: Merge bottle JSON into formula
         run: |
-          brew bottle --merge --write --no-commit ./*.bottle.json
+          brew bottle --merge --write --no-commit bottles/*.bottle.json
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
 
@@ -110,12 +114,19 @@ jobs:
           git push origin HEAD:main
 
       - name: Create GitHub Release and upload bottles
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="squash-ai-${{ steps.version.outputs.version }}"
+          mapfile -t BOTTLES < <(find bottles -name "*.bottle.tar.gz")
+          if [[ ${#BOTTLES[@]} -eq 0 ]]; then
+            echo "ERROR: no .bottle.tar.gz files found"
+            find bottles -type f | sort
+            exit 1
+          fi
+          echo "Uploading ${#BOTTLES[@]} bottles: ${BOTTLES[*]}"
           gh release create "$TAG" \
             --title "squash-ai ${{ steps.version.outputs.version }}" \
             --notes "Homebrew bottles for squash-ai ${{ steps.version.outputs.version }}" \
-            *.bottle.tar.gz \
-            || gh release upload "$TAG" *.bottle.tar.gz --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            "${BOTTLES[@]}" \
+            || gh release upload "$TAG" "${BOTTLES[@]}" --clobber
