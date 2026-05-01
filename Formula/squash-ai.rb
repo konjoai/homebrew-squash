@@ -10,10 +10,10 @@ class SquashAi < Formula
 
   bottle do
     root_url "https://github.com/konjoai/homebrew-squash/releases/download/squash-ai-2.7.0"
-    rebuild 1
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "942fb5571a11bc15676984cac5d32b0e7b924319e9116901bf7625a6598251f9"
-    sha256 cellar: :any_skip_relocation, arm64_sonoma:  "ea180d4fa43006669414129a672f2fc3154bfac9d4fd1490808425029578bf1b"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "62198bde09112c4617a1f8be602c5e250136e16b993bd6538857f0464d7e0a17"
+    rebuild 2
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "e147f3f82df28608e0f76a9d0213edd3a7e86e185d4d965f7ebf9b1f2e856bf5"
+    sha256 cellar: :any_skip_relocation, arm64_sonoma:  "0c30eb48cea0ecdfbdedefe7dda1c3fb12844ba6fa535acf764330198b40d7f5"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "025b5ddb1d1845106e441fc9ad0adff804fece8754f4e4b906c4843b75e0afd3"
   end
 
   depends_on "python@3.12"
