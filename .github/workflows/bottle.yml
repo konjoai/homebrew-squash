@@ -118,7 +118,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="squash-ai-${{ steps.version.outputs.version }}"
-          mapfile -t BOTTLES < <(find bottles -name "*.bottle.tar.gz")
+          BOTTLES=()
+          while IFS= read -r f; do BOTTLES+=("$f"); done \
+            < <(find bottles -name "*.bottle.tar.gz")
           if [[ ${#BOTTLES[@]} -eq 0 ]]; then
             echo "ERROR: no .bottle.tar.gz files found"
             find bottles -type f | sort
