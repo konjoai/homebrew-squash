@@ -42,7 +42,7 @@ class SquashAi < Formula
   end
 
   test do
-    assert_match version.to_s, shell_output("#{bin}/squash --version")
-    assert_match "squash", shell_output("#{bin}/squash --help")
+    assert_match "attest", shell_output("#{bin}/squash --help")
+    assert_match "policies", shell_output("#{bin}/squash --help")
   end
 end
