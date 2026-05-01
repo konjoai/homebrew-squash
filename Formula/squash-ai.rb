@@ -7,14 +7,6 @@ class SquashAi < Formula
   sha256 "4b2a15f724e51a69688d13faa9863a390605812c70519546ab7049fb25c431a2"
   license "Apache-2.0"
 
-  bottle do
-    root_url "https://github.com/konjoai/homebrew-squash/releases/download/squash-ai-2.7.0"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: :rebuilding
-    sha256 cellar: :any_skip_relocation, arm64_sonoma:  :rebuilding
-    sha256 cellar: :any_skip_relocation, ventura:       :rebuilding
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  :rebuilding
-  end
-
   depends_on "python@3.12"
 
   resource "anyio" do
