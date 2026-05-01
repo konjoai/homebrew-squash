@@ -51,16 +51,20 @@ jobs:
         run: |
           brew bottle \
             --json \
+            --output-dir "$GITHUB_WORKSPACE" \
             --root-url "https://github.com/konjoai/homebrew-squash/releases/download/squash-ai-${{ steps.version.outputs.version }}" \
             konjoai/squash/squash-ai
+
+      - name: List bottle output
+        run: ls -lh "$GITHUB_WORKSPACE"/*.bottle.* 2>/dev/null || echo "no bottle files in workspace"
 
       - name: Upload bottle and JSON
         uses: actions/upload-artifact@v4
         with:
           name: bottle_${{ matrix.platform }}
           path: |
-            *.bottle.tar.gz
-            *.bottle.json
+            ${{ github.workspace }}/*.bottle.tar.gz
+            ${{ github.workspace }}/*.bottle.json
           if-no-files-found: error
 
   # ── Phase 2: merge bottle JSON into formula, publish release ───────────────
