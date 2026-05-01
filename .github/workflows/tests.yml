@@ -1,0 +1,59 @@
+name: brew test-bot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Formula/**.rb"
+  pull_request:
+    paths:
+      - "Formula/**.rb"
+
+jobs:
+  test-bot:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: arm64_sequoia
+          - os: macos-14
+            platform: arm64_sonoma
+          - os: macos-13
+            platform: ventura
+          - os: ubuntu-latest
+            platform: x86_64_linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew RubyGems
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-rubygems-
+
+      - run: brew test-bot --only-cleanup-before
+
+      - run: brew test-bot --only-setup
+
+      - run: brew test-bot --only-tap-syntax
+
+      - name: Run formulae tests
+        if: github.event_name == 'pull_request'
+        run: brew test-bot --only-formulae
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
+
+      - name: Upload bottle artifacts
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottles_${{ matrix.platform }}
+          path: "*.bottle.*"
+          if-no-files-found: ignore

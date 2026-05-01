@@ -1,0 +1,119 @@
+name: Build and publish bottles
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Formula/**.rb"
+
+jobs:
+  # ── Phase 1: build one bottle per platform ─────────────────────────────────
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: arm64_sequoia
+          - os: macos-14
+            platform: arm64_sonoma
+          - os: macos-13
+            platform: ventura
+          - os: ubuntu-latest
+            platform: x86_64_linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Cache Homebrew RubyGems
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-rubygems-
+
+      - name: Extract formula version
+        id: version
+        run: |
+          VERSION=$(grep -o 'squash_ai-[0-9.]*\.tar' Formula/squash-ai.rb | grep -o '[0-9.]*[0-9]')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install squash-ai (build-bottle mode)
+        run: |
+          brew install --build-bottle konjoai/squash/squash-ai
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
+
+      - name: Build bottle
+        run: |
+          brew bottle \
+            --json \
+            --root-url "https://github.com/konjoai/homebrew-squash/releases/download/squash-ai-${{ steps.version.outputs.version }}" \
+            konjoai/squash/squash-ai
+
+      - name: Upload bottle and JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottle_${{ matrix.platform }}
+          path: |
+            *.bottle.tar.gz
+            *.bottle.json
+          if-no-files-found: error
+
+  # ── Phase 2: merge bottle JSON into formula, publish release ───────────────
+  publish:
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out tap
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Extract formula version
+        id: version
+        run: |
+          VERSION=$(grep -o 'squash_ai-[0-9.]*\.tar' Formula/squash-ai.rb | grep -o '[0-9.]*[0-9]')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download all bottle artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bottle_*
+          merge-multiple: true
+
+      - name: Merge bottle JSON into formula
+        run: |
+          brew bottle --merge --write --no-commit ./*.bottle.json
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
+
+      - name: Commit updated formula (with bottle block)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/squash-ai.rb
+          git diff --cached --quiet || git commit \
+            -m "chore(bottles): add bottles for squash-ai ${{ steps.version.outputs.version }}"
+          git push
+
+      - name: Create GitHub Release and upload bottles
+        run: |
+          TAG="squash-ai-${{ steps.version.outputs.version }}"
+          gh release create "$TAG" \
+            --title "squash-ai ${{ steps.version.outputs.version }}" \
+            --notes "Homebrew bottles for squash-ai ${{ steps.version.outputs.version }}" \
+            *.bottle.tar.gz \
+            || gh release upload "$TAG" *.bottle.tar.gz --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
