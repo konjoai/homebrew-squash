@@ -6,6 +6,7 @@ class SquashAi < Formula
   url "https://files.pythonhosted.org/packages/8a/51/c8cf3cb11241225acbca64ffe5fd0e61bb7d62c266754624d6b69c1b4713/squash_ai-2.7.0.tar.gz"
   sha256 "4b2a15f724e51a69688d13faa9863a390605812c70519546ab7049fb25c431a2"
   license "Apache-2.0"
+  version "2.7.0"
 
   depends_on "python@3.12"
 

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "Formula/**.rb"
+  workflow_dispatch:
 
 jobs:
   # ── Phase 1: build one bottle per platform ─────────────────────────────────
